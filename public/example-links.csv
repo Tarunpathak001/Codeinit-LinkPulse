@@ -1,0 +1,3 @@
+destination_url,custom_alias,title,campaign,expires_at,max_clicks
+https://example.com/register,fest26,Event registration,,,100
+https://example.com/schedule,,Event schedule,,,

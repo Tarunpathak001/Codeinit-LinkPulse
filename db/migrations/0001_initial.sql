@@ -1,0 +1,23 @@
+CREATE TABLE profiles(id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE, display_name text NOT NULL DEFAULT '', created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE campaigns(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), owner_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, name text NOT NULL CHECK(length(name) BETWEEN 1 AND 80), description text NOT NULL DEFAULT '',created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),UNIQUE(id,owner_id));
+CREATE TABLE links(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),owner_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,campaign_id uuid REFERENCES campaigns(id) ON DELETE SET NULL,title text NOT NULL DEFAULT '',short_code text NOT NULL UNIQUE CHECK(short_code ~ '^[a-z0-9][a-z0-9_-]{2,47}$'),destination_url text NOT NULL,is_active boolean NOT NULL DEFAULT true,expires_at timestamptz,max_clicks integer CHECK(max_clicks>0),accepted_redirect_count integer NOT NULL DEFAULT 0 CHECK(accepted_redirect_count>=0),password_hash text,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),disabled_at timestamptz,disabled_reason text,FOREIGN KEY(campaign_id,owner_id) REFERENCES campaigns(id,owner_id));
+CREATE TABLE click_events(id bigserial PRIMARY KEY,link_id uuid NOT NULL REFERENCES links(id) ON DELETE CASCADE,occurred_at timestamptz NOT NULL DEFAULT now(),accepted boolean NOT NULL DEFAULT true,source text NOT NULL,referrer_host text,device_type text NOT NULL,browser text NOT NULL,operating_system text NOT NULL,country_code text,is_probable_bot boolean NOT NULL,anonymous_visitor_id text);
+CREATE TABLE redirect_attempts(id bigserial PRIMARY KEY,link_id uuid NOT NULL REFERENCES links(id) ON DELETE CASCADE,occurred_at timestamptz NOT NULL DEFAULT now(),decision text NOT NULL,reason text NOT NULL);
+CREATE TABLE admin_actions(id bigserial PRIMARY KEY,admin_id uuid REFERENCES profiles(id) ON DELETE SET NULL,link_id uuid NOT NULL REFERENCES links(id) ON DELETE CASCADE,action text NOT NULL,reason text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE rate_limits(key text PRIMARY KEY,window_start timestamptz NOT NULL,hits integer NOT NULL CHECK(hits>0));
+CREATE INDEX campaign_owner_idx ON campaigns(owner_id);
+CREATE INDEX links_owner_idx ON links(owner_id);
+CREATE INDEX links_campaign_idx ON links(campaign_id);
+CREATE INDEX events_link_time_idx ON click_events(link_id,occurred_at);
+CREATE INDEX events_time_idx ON click_events(occurred_at);
+CREATE INDEX attempts_link_time_idx ON redirect_attempts(link_id,occurred_at);
+-- Data access is server-only through DATABASE_URL. No direct Data API grants.
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE click_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE redirect_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON profiles,campaigns,links,click_events,redirect_attempts,admin_actions,rate_limits FROM anon,authenticated;
+REVOKE ALL ON click_events_id_seq,redirect_attempts_id_seq,admin_actions_id_seq FROM anon,authenticated;
