@@ -16,6 +16,9 @@ export default function Home() {
         <Brand />
         <div>
           <Link href="/login">Sign in</Link>
+          <Link className="button secondary" href="/dashboard">
+            Dashboard
+          </Link>
           <Link className="button primary" href="/signup">
             Get started <ArrowUpRight size={16} />
           </Link>
