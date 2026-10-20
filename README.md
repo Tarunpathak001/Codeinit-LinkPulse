@@ -6,6 +6,8 @@ A production URL shortener and real-time link intelligence platform built for In
 
 ---
 
+**Important:** You have to only use your valid email for login / sign in / sign up. LinkPulse does not apply any application-level rate limiter to login or sign-up endpoints; authentication is handled via Supabase, which requires real email verification and triggers email delivery limits if invalid or repeated addresses are attempted.
+
 ## Gist
 
 If you're short on time, here is why LinkPulse isn't just another basic URL shortener:
