@@ -6,7 +6,12 @@ A production URL shortener and real-time link intelligence platform built for In
 
 ---
 
-**Important:** You have to only use your valid email for login / sign in / sign up. LinkPulse does not apply any application-level rate limiter to login or sign-up endpoints; authentication is handled via Supabase, which requires real email verification and triggers email delivery limits if invalid or repeated addresses are attempted.
+**Important on Sign-up & Email Verification:** 
+To prevent spam, disposable/temporary email abuse, and automated bot registrations, LinkPulse enforces strict real email verification through Supabase Auth. Because authentication uses Supabase's default transactional mailer, it enforces a built-in security rate limit of 
+**2 confirmation emails per hour**.
+
+- You must sign up using a valid, accessible personal email address.
+- If you see `email rate limit exceeded`, the project's hourly email dispatch quota has been reached. Please wait for the hourly window to reset or sign in with an already verified account.
 
 ## Gist
 
@@ -80,7 +85,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-> **Important Auth Note:** Authentication is handled securely via Supabase. For local development or live hackathon testing, you can either sign up with a valid email or turn off **Confirm email** under *Supabase Dashboard → Authentication → Providers → Email* so test accounts can sign in immediately without waiting for an email confirmation link.
+> **Important Auth Note:** Authentication is handled securely via Supabase and requires real email confirmation to protect the platform against fake or temporary disposable emails. Since the default mailer limits dispatches to **3 to 4 confirmation emails per hour**, please use a valid, accessible email address when testing.
 
 ---
 
