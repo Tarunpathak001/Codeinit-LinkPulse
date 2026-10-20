@@ -1,3 +1,9 @@
+> ### Instant Judge / Evaluator Access
+> Skip sign-up and test the live workspace immediately with pre-configured access:
+> - **Email:** `judgesexclusive@gmail.com`
+> - **Password:** `Testing1234`
+
+
 # LinkPulse
 
 > **Short links you can trust. Rules you can prove before you publish.**
@@ -7,12 +13,7 @@ A production URL shortener and real-time link intelligence platform built for In
 ---
 
 **Important on Sign-up & Email Verification:** 
-To prevent spam, disposable/temporary email abuse, and automated bot registrations, LinkPulse enforces strict real email verification through Supabase Auth. Because authentication uses Supabase's default transactional mailer, it enforces a built-in security rate limit of 
-**2 confirmation emails per hour**.
-
-- You must sign up using a valid, accessible personal email address.
-- If you see `email rate limit exceeded`, the project's hourly email dispatch quota has been reached. Please wait for the hourly window to reset or sign in with an already verified account.
-
+To prevent spam, disposable/temporary email abuse, and automated bot registrations, LinkPulse enforces strict real email verification through Supabase Auth.
 ## Gist
 
 If you're short on time, here is why LinkPulse isn't just another basic URL shortener:
