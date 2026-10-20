@@ -14,6 +14,9 @@ A production URL shortener and real-time link intelligence platform built for In
 
 **Important on Sign-up & Email Verification:** 
 To prevent spam, disposable/temporary email abuse, and automated bot registrations, LinkPulse enforces strict real email verification through Supabase Auth.
+
+**Important:** Due to Supabase's rate limits on email sending , it may take some time to receive the verification email for new accounts. Please be patient or use the pre-configured judge credentials above for immediate access and also check spam mails section in case it isnt shown in inbox.
+
 ## Gist
 
 If you're short on time, here is why LinkPulse isn't just another basic URL shortener:
