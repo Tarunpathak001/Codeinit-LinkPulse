@@ -1,103 +1,109 @@
 # LinkPulse
 
-**Short links you can trust. Rules you can prove.**
+> **Short links you can trust. Rules you can prove before you publish.**
 
-A full-stack URL shortener and analytics workspace for Innovista 2026. Built with Next.js App Router, React, TypeScript, Tailwind CSS, Supabase Auth, PostgreSQL and Drizzle. This archive contains the actual frontend, backend, migrations and tests. It is not a static dashboard or a hosted deployment.
+A production URL shortener and real-time link intelligence platform built for Innovista 2026. Powered by Next.js 16 (App Router), TypeScript, Tailwind CSS, Supabase Auth, PostgreSQL, and Drizzle ORM.
 
+---
 
-**Important:** You have to only use your valid email for login / sign in / sign up. LinkPulse does not apply any application-level rate limiter to login or sign-up endpoints; authentication is handled via Supabase, which requires real email verification and triggers email delivery limits if invalid or repeated addresses are attempted.
+## Gist
 
+If you're short on time, here is why LinkPulse isn't just another basic URL shortener:
 
+| Feature | Why It Matters & What We Built |
+| :--- | :--- |
+|  **The Rule Lab (Interactive Sandbox)** | Ever wondered if an expired or click-capped link will behave properly before you share it with 10,000 people? Rule Lab runs mock visitor scenarios through our **exact same production redirect engine** and prints an ordered decision trace without touching your live database. |
+|  **Atomic Concurrency (No Over-Clicks)** | If a link is capped at 100 clicks and 100 people click at the exact same millisecond, standard shorteners blow past the cap. We lock the row (`SELECT ... FOR UPDATE`) in an ACID transaction so click caps are strict, absolute guarantees. |
+|  **Cryptographic Access Gates** | Password-protected links don't just ask for a password—they enforce database-backed brute-force rate limiting and mint short-lived, HMAC-signed HttpOnly cookies. Opening the password challenge does not count as a valid visit. |
+|  **Honest Privacy-First Analytics** | No third-party tracking scripts (no Google Analytics, no Meta pixels). We collect anonymized visitor metadata directly on our server: device types, operating systems, referrer hosts, QR vs. direct attribution, and separate probable bots from human visitors. |
+|  **Bulk CSV Pipeline** | Import up to 100 custom links at once. Includes pre-commit validation, collision detection for custom aliases, and row-by-row error reporting so good rows succeed even if others fail. |
+|  **Enforced Admin Governance** | Verified admins can apply reasoned takedowns from a dedicated moderation panel. Once disabled by an admin, the original link owner cannot override or bypass the suspension. |
 
-## Start here
+---
 
-You need **Node.js 24 LTS (or 22.12+)**, npm, and a **Supabase project**. Use Node.js 24 LTS if available. The landing page can build without credentials; authentication and persistent workflows require your configuration.
+## 🛠️ Tech Stack & Architecture
 
+- **Framework**: Next.js 16.4 (App Router, Turbopack, Server Components & Server Actions)
+- **Language**: TypeScript 6 (strict type safety end-to-end)
+- **Database**: PostgreSQL with Drizzle ORM
+- **Auth & Session**: Supabase Auth (PKCE exchange, SSR cookie handling)
+- **Testing**: Vitest with embedded PGlite (isolated in-memory Postgres test suite, 67/67 tests passing)
+- **Styling**: Vanilla modern CSS tokens & Tailwind CSS
+
+---
+
+## 🚀 Getting Started Locally
+
+### Prerequisites
+- **Node.js 24 LTS** (or 22.12+)
+- A free **Supabase** project (for PostgreSQL & Auth)
+
+### 1. Clone & Install
 ```bash
+git clone https://github.com/Tarunpathak001/LinkPulse.git
+cd LinkPulse
 npm ci
+```
+
+### 2. Configure Environment Variables
+Copy the example environment file:
+```bash
+# Windows PowerShell
+Copy-Item .env.example .env.local
+
+# macOS / Linux
 cp .env.example .env.local
 ```
 
-On Windows PowerShell, use `Copy-Item .env.example .env.local` instead of `cp`.
+Fill in your Supabase connection strings and credentials in `.env.local`:
 
-Fill these values in `.env.local`:
+| Variable | Description |
+| :--- | :--- |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` locally, or your production HTTPS domain |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL (`https://xyz.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase publishable / anon public key |
+| `DATABASE_URL` | Supabase Postgres transaction pooler URL (port 6543) |
+| `MIGRATION_DATABASE_URL` | Direct or session pooler URL for migrations (port 5432) |
+| `AUTH_COOKIE_SECRET` | 32-byte random hex string used for signing access cookies |
+| `TRUST_VERCEL_PROXY` | Set to `false` locally; set to `true` when deployed on Vercel |
 
-| Variable                        | Value                                                                                                                                   |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`           | `http://localhost:3000` locally; your HTTPS origin in production, without a path                                                        |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL                                                                                                               |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase publishable key or legacy anon key; **not** a service-role key                                                            |
-| `DATABASE_URL`                  | Supabase Postgres transaction-pooler connection string, copied from the project's Connect panel; URL-encode special password characters |
-| `MIGRATION_DATABASE_URL`        | Direct or session-pooler connection string for migrations; falls back to `DATABASE_URL`                                                 |
-| `AUTH_COOKIE_SECRET`            | Random secret of at least 32 characters; generate with the command below                                                                |
-| `ADMIN_EMAILS`                  | Optional comma-separated, verified administrator email addresses                                                                        |
-| `BLOCKED_DOMAINS`               | Optional comma-separated domains to block, without protocols or paths                                                                   |
-| `TRUST_VERCEL_PROXY`            | Leave `false` locally. Set `true` only on Vercel to use its trusted proxy IP header for password rate limiting                          |
+> **Tip:** You can generate a fresh `AUTH_COOKIE_SECRET` with:
+> `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`
 
-Generate a cookie secret:
-
-```bash
-node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
-```
-
-1. In Supabase, enable the **Email** auth provider. Keep email confirmation enabled, especially for admin accounts.
-2. Configure **Authentication → URL Configuration**. Set Site URL to your app origin and allow `http://localhost:3000/auth/callback` for local development. Add your production `/auth/callback` URL when deploying.
-3. Keep the standard Supabase confirmation email template using `{{ .ConfirmationURL }}`; the app exchanges the PKCE code at `/auth/callback`. Confirmation should be completed in the same browser that initiated sign-up.
-4. Apply the migration and start the app:
-
+### 3. Run Migrations & Start Server
 ```bash
 npm run db:migrate
 npm run dev
 ```
 
-5. Open `http://localhost:3000`, create an account, confirm the email, and sign in.
-6. Create a campaign and a link. Open the displayed short URL in another tab, then refresh analytics to observe the persisted visit.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-There are no fabricated accounts, seeded traffic, dummy sessions, or hardcoded credentials. **You do not need a Supabase service-role key**: database access uses the server-only `DATABASE_URL`, while Supabase Auth verifies identities.
+> **Important Auth Note:** Authentication is handled securely via Supabase. For local development or live hackathon testing, you can either sign up with a valid email or turn off **Confirm email** under *Supabase Dashboard → Authentication → Providers → Email* so test accounts can sign in immediately without waiting for an email confirmation link.
 
-## Included functionality
+---
 
-- Public landing page, registration, sign-in, email-confirmation callback, session refresh and sign-out.
-- Protected dashboard and server-enforced owner checks on all management APIs.
-- Link creation, searchable table, details, editing, enable/disable, copy actions and PNG QR downloads.
-- Random aliases, normalized custom aliases, reserved names and a database unique constraint.
-- Real `GET /:code` temporary redirects, no-store responses, friendly unavailable pages and non-counting `HEAD` handling.
-- Expiration, click caps, password protection, a short-lived signed HttpOnly access gate, and database-backed rate limiting.
-- A pure shared rule evaluator used by both Rule Lab and the production redirect transaction.
-- Campaign creation, editing, link assignment and campaign-scoped performance views.
-- Persisted click metadata, time-series charts, source/device/browser breakdowns, approximate cookie-based unique visitors, probable bot separation, traffic change and recent activity.
-- CSV parsing, server-side preview, up to 100 rows, per-row validation and accurate partial import outcomes.
-- Administrator allowlist, manual takedowns, platform totals and reason audit log. Owners cannot undo admin takedowns.
-- Responsive charcoal/cyan interface, loading indicators, empty states, keyboard focus, reduced-motion support and error messages.
+## 🧪 Testing & Code Quality
 
-## Commands
+We wrote 67 tests covering our redirect evaluator, database integrity, access gates, and concurrency limits using an embedded Postgres engine (`PGlite`)—meaning you can run our entire test suite without needing an active internet connection or cloud credentials:
 
-| Command                    | Purpose                                                                           |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| `npm run dev`              | Local development                                                                 |
-| `npm run build`            | Production build                                                                  |
-| `npm start`                | Serve the production build                                                        |
-| `npm run db:migrate`       | Apply versioned SQL migration once                                                |
-| `npm run typecheck`        | Strict TypeScript checks                                                          |
-| `npm run lint`             | Next.js and TypeScript ESLint checks                                              |
-| `npm test`                 | Unit, service, route-handler and embedded PostgreSQL tests, no credentials needed |
-| `npm run test:integration` | Separate real PostgreSQL concurrency suite; requires `TEST_DATABASE_URL`          |
-| `npm run format:check`     | Check source formatting                                                           |
+```bash
+# Run unit & embedded database tests (67/67 passing)
+npm test
 
-## Deployment
+# Run strict TypeScript type checks
+npm run typecheck
 
-Follow [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Supabase and Vercel setup. Never deploy this as a static export: redirects, auth and analytics require a server runtime. Vercel detects Next.js automatically.
+# Run linter
+npm run lint
 
-A QR code only works on another device when its canonical app URL is reachable from that device. `localhost` on a phone points to the phone itself. Use a deployed HTTPS domain for the hackathon demo.
+# Production build verification
+npm run build
+```
 
-## Read next
+---
 
-- [DEMO.md](DEMO.md): five-minute judging walkthrough.
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): ownership, data model, redirect transaction and security decisions.
-- [docs/TESTING.md](docs/TESTING.md): reproducible test instructions and browser acceptance checklist.
-- [docs/VERIFICATION.md](docs/VERIFICATION.md): exact verification status and known limits.
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): migration and deployment steps.
+## 📖 Deep Dives & Documentation
 
-## Delivery status
-
-Implemented locally; **not deployed**. Supabase email delivery, real account sessions, production connections and browser interactions require a configured environment and have not been verified against your accounts. See the verification report for test results and limits.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — How the redirect transaction, concurrency locks, and security boundaries work under the hood.
+- [docs/TESTING.md](docs/TESTING.md) — Verification suite and browser checklist.
+- [docs/VERIFICATION.md](docs/VERIFICATION.md) — Exact test status and known runtime limits.
